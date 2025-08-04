@@ -1,0 +1,35 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend server for Say Pharmacy",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.12.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.0.1",
+    "express-validator": "^7.2.1",
+    "form-data": "^4.0.0",
+<<<<<<< HEAD
+    "mongodb": "^6.18.0",
+    "mongoose": "^8.17.0",
+=======
+>>>>>>> 564621e5aa9ae889e7edd4ba9dbb0b0723380926
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^2.7.0",
+    "puppeteer": "^24.15.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
