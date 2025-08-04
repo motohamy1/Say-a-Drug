@@ -4,10 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, RefreshCw, Database, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-<<<<<<< HEAD
-=======
 import { drugsAPI } from "@/services/api";
->>>>>>> 564621e5aa9ae889e7edd4ba9dbb0b0723380926
 
 interface Drug {
   Drugname?: string;
@@ -38,28 +35,11 @@ export default function Drugs() {
   const fetchDrugs = useCallback(async (search: string = "", page: number = 1) => {
     setLoading(true);
     try {
-<<<<<<< HEAD
-      const API_BASE_URL = 'http://localhost:3001/api';
-      const url = new URL(`${API_BASE_URL}/drugs`);
-      url.searchParams.append('search', search);
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('limit', '100');
-
-      const response = await fetch(url.toString());
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Network response was not ok' }));
-        throw new Error(errorData.message || 'An unknown error occurred');
-      }
-      
-      const data = await response.json();
-=======
       const data = await drugsAPI.fetchDrugs({
         search,
         page,
         limit: 12
       });
->>>>>>> 564621e5aa9ae889e7edd4ba9dbb0b0723380926
       
       setDrugs(data.drugs || []);
       setTotalPages(data.totalPages || 1);

@@ -69,6 +69,27 @@ export default {
 					success: 'hsl(var(--pharmacy-success))',
 					warning: 'hsl(var(--pharmacy-warning))',
 					info: 'hsl(var(--pharmacy-info))'
+				},
+				dark: {
+					background: 'hsl(var(--background))',
+					foreground: 'hsl(var(--foreground))',
+					primary: 'hsl(var(--primary))',
+					secondary: 'hsl(var(--secondary))',
+					muted: 'hsl(var(--muted))',
+					accent: 'hsl(var(--accent))',
+					border: 'hsl(var(--border))',
+					input: 'hsl(var(--input))',
+					ring: 'hsl(var(--ring))',
+					card: 'hsl(var(--card))',
+					popover: 'hsl(var(--popover))',
+					destructive: 'hsl(var(--destructive))',
+					'primary-foreground': 'hsl(var(--primary-foreground))',
+					'secondary-foreground': 'hsl(var(--secondary-foreground))',
+					'muted-foreground': 'hsl(var(--muted-foreground))',
+					'accent-foreground': 'hsl(var(--accent-foreground))',
+					'card-foreground': 'hsl(var(--card-foreground))',
+					'popover-foreground': 'hsl(var(--popover-foreground))',
+					'destructive-foreground': 'hsl(var(--destructive-foreground))'
 				}
 			},
 			borderRadius: {

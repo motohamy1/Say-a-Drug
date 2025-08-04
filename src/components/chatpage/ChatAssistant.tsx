@@ -2,7 +2,7 @@
 import { Layout } from '@/components/Layout/Layout';
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
-import './ChatAssistant.css';
+// No longer importing ChatAssistant.css as styles will be migrated to Tailwind
 
 // Define TypeScript interface for messages
 interface Message {
@@ -319,18 +319,22 @@ const ChatAssistant: React.FC = () => {
 
   return (
     <Layout>
-      <div className="chat-page-container">
+      <div className="flex flex-col h-full w-full bg-background text-foreground">
         
         {/* Chat history */}
-        <div className="chat-history">
+        <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 max-w-3xl w-full mx-auto relative">
           {messages.map((msg) => (
-            <div key={msg.id} className={`message ${msg.sender} ${msg.isError ? 'error' : ''}`}>
+            <div key={msg.id} className={`max-w-[85%] p-4 rounded-xl break-words leading-normal text-base ${
+              msg.sender === 'user'
+                ? 'self-end bg-primary text-primary-foreground rounded-br-md'
+                : 'self-start bg-muted text-muted-foreground border border-border rounded-bl-md'
+            } ${msg.isError ? 'bg-destructive text-destructive-foreground border-destructive' : ''}`}>
               <div className="message-text">{msg.text}</div>
             </div>
           ))}
           {isLoading && (
-            <div className="message ai">
-              <div className="message-text typing-indicator">
+            <div className="self-start bg-muted text-muted-foreground border border-border rounded-xl rounded-bl-md p-4 max-w-[85%]">
+              <div className="typing-indicator italic text-muted-foreground">
                 Thinking...
               </div>
             </div>
@@ -339,8 +343,8 @@ const ChatAssistant: React.FC = () => {
         </div>
 
         {/* Input area */}
-        <div className="chat-input-area">
-          <div className="input-wrapper">
+        <div className="p-4 border-t border-border bg-background max-w-3xl w-full mx-auto relative">
+          <div className="relative w-full flex items-center">
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -348,13 +352,14 @@ const ChatAssistant: React.FC = () => {
               placeholder="Type your message or use voice recording..."
               disabled={isLoading || isRecording}
               rows={1}
+              className="w-full p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
             />
             
             {/* Audio level indicator */}
             {isRecording && (
-              <div className="audio-level-indicator">
-                <div 
-                  className="audio-level-bar" 
+              <div className="absolute bottom-0 left-6 right-20 h-[3px] bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-100 ease-linear rounded-full"
                   style={{ width: `${audioLevel}%` }}
                 />
               </div>
@@ -364,7 +369,9 @@ const ChatAssistant: React.FC = () => {
             <button
               onClick={toggleRecording}
               disabled={isLoading}
-              className={micButtonClass}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-full cursor-pointer transition-all duration-200 ${
+                isRecording ? 'bg-destructive text-destructive-foreground shadow-md animate-pulse' : 'bg-transparent text-foreground hover:bg-muted'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
               aria-label={isRecording ? "Stop recording" : "Start voice recording"}
             >
               <MicButtonIcon size={20} />
@@ -375,7 +382,7 @@ const ChatAssistant: React.FC = () => {
               <button
                 onClick={() => handleSendMessage()}
                 disabled={isLoading}
-                className="send-button"
+                className="absolute right-14 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full cursor-pointer transition-colors duration-200 disabled:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Send message"
               >
                 <Send size={20} />
@@ -385,10 +392,10 @@ const ChatAssistant: React.FC = () => {
           
           {/* Status messages */}
           {isRecording && (
-            <p className="recording-status">🔴 Recording... Click mic to stop</p>
+            <p className="text-destructive text-sm mt-2 text-center font-medium">🔴 Recording... Click mic to stop</p>
           )}
           {voiceError && (
-            <p className="voice-error">{voiceError}</p>
+            <p className="text-destructive text-sm mt-2 text-center">{voiceError}</p>
           )}
         </div>
       </div>

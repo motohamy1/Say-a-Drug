@@ -64,41 +64,51 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 10% 10%; /* Darker gray for background */
+    --foreground: 210 20% 90%; /* Lighter gray for text */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 10% 15%; /* Slightly lighter than background for cards */
+    --card-foreground: 210 20% 90%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 10% 15%;
+    --popover-foreground: 210 20% 90%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 15 100% 50%; /* #ff3d00 - vibrant orange */
+    --primary-foreground: 0 0% 100%; /* White for contrast */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 301 70% 70%; /* #e573e6 - vibrant pink/purple */
+    --secondary-foreground: 220 10% 10%; /* Dark background for contrast */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 10% 20%; /* Muted background */
+    --muted-foreground: 210 20% 70%; /* Muted text */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 110 20% 77%; /* #85ab80 - greenish accent */
+    --accent-foreground: 220 10% 10%; /* Dark background for contrast */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%; /* Keep original destructive */
+    --destructive-foreground: 210 40% 98%; /* Keep original destructive */
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 220 10% 25%; /* Slightly lighter border */
+    --input: 220 10% 20%; /* Input background */
+    --ring: 15 100% 50%; /* Ring color same as primary */
+
+    /* Sidebar colors for dark mode */
+    --sidebar-background: 220 10% 10%; /* Same as background */
+    --sidebar-foreground: 210 20% 90%; /* Same as foreground */
+    --sidebar-primary: 15 100% 50%; /* #ff3d00 */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 301 70% 70%; /* #e573e6 */
+    --sidebar-accent-foreground: 220 10% 10%;
+    --sidebar-border: 220 10% 25%;
+    --sidebar-ring: 15 100% 50%;
+
+    /* Pharmacy colors for dark mode - using new palette */
+    --pharmacy-primary: 15 100% 50%; /* #ff3d00 */
+    --pharmacy-secondary: 301 70% 70%; /* #e573e6 */
+    --pharmacy-accent: 110 20% 77%; /* #85ab80 */
+    --pharmacy-success: 142 76% 36%; /* Keep original success */
+    --pharmacy-warning: 38 92% 50%; /* Keep original warning */
+    --pharmacy-info: 217 91% 60%; /* Keep original info */
   }
 }
 

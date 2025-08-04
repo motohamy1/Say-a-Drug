@@ -1,12 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  Home, 
-  Mic, 
-  Pill, 
-  Calculator, 
-  Heart, 
+import {
+  Home,
+  Mic,
+  Pill,
+  Calculator,
+  Heart,
   User,
   Menu
 } from "lucide-react";
@@ -23,10 +23,9 @@ const navigation = [
 export function Sidebar() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-
   return (
     <div className={cn(
-      "flex flex-col h-screen bg-white border-r border-border transition-all duration-300",
+      "flex flex-col h-screen bg-sidebar-background border-r border-border transition-all duration-300",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Header */}
@@ -55,7 +54,7 @@ export function Sidebar() {
                 className={cn(
                   "w-full justify-start text-left transition-all duration-200",
                   isActive && "bg-primary text-primary-foreground shadow-sm",
-                  !isActive && "hover:bg-secondary",
+                  !isActive && "hover:bg-primary hover:text-primary-foreground",
                   isCollapsed && "px-2 justify-center"
                 )}
               >
@@ -83,12 +82,8 @@ export function Sidebar() {
               </div>
               {!isCollapsed && (
                 <div className="text-left">
-                  <p className="text-sm font-medium"> User</p>
-<<<<<<< HEAD
+                  <p className="text-sm font-medium text-sidebar-foreground">User</p>
                   <p className="text-xs text-muted-foreground">User info</p>
-=======
-                  <p className="text-xs text-muted-foreground">Pharmacist</p>
->>>>>>> 564621e5aa9ae889e7edd4ba9dbb0b0723380926
                 </div>
               )}
             </div>

@@ -22,15 +22,15 @@ export default function PersonalCare() {
 
   return (
     <Layout>
-      <div className="flex-1 bg-white"> {/* Clean white background */}
+      <div className="flex-1 bg-background text-foreground"> {/* Clean white background */}
         {/* <div className="text-sm text-gray-500 pt-4 pl-4 mb-2">
           Home / Personal Care
         </div> */}
 
-        <h1 className="text-2xl font-semibold text-black pl-4 mb-6">
+        <h1 className="text-2xl font-semibold text-foreground pl-4 mb-6">
           Personal Care
         </h1>
-        <h2 className="font-semibold text-black pl-4 mb-6">
+        <h2 className="font-semibold text-foreground pl-4 mb-6">
           coming soon...
         </h2>
 
@@ -61,8 +61,8 @@ export default function PersonalCare() {
             
             {/* Center element - optional logo or title */}
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-blue-600 font-semibold text-sm text-center">Personal<br/>Care</span>
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-primary-foreground font-semibold text-sm text-center">Personal<br/>Care</span>
               </div>
             </div>
           </div>
