@@ -31,5 +31,8 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "backend/src/index.js"]
+  "include": [
+    "src",
+    "backend/src/**/*"
+  ]
 }

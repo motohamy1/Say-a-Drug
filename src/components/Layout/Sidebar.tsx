@@ -14,7 +14,7 @@ import { useState } from "react";
 
 const navigation = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Mira assistant", href: "/voice-assistant", icon: Mic },
+  { name: "Mira Assistant", href: "/voice-assistant", icon: Mic },
   { name: "Drugs", href: "/drugs", icon: Pill },
   { name: "Dosage calculator", href: "/dosage-calculator", icon: Calculator },
   { name: "Personal Care", href: "/personal-care", icon: Heart },

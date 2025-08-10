@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import MiraAssistant from "./pages/MiraAssistant";
 import ChatAssistant from "./components/chatpage/ChatAssistant";
 import DosageCalculator from "./pages/DosageCalculator";
 import Drugs from "./pages/Drugs";
@@ -21,7 +22,7 @@ const App = () => (
       <Sonner />
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/voice-assistant" element={<ChatAssistant />} />
+          <Route path="/voice-assistant" element={<MiraAssistant />} />
           <Route path="/dosage-calculator" element={<DosageCalculator />} />
           <Route path="/drugs" element={<Drugs />} />
           <Route path="/personal-care" element={<PersonalCare />} />

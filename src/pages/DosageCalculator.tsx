@@ -5,8 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mic, Calculator, Volume2, VolumeX } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { processVoiceCommand, speakResponse } from "@/utils/voiceUtils";
+// import { drugsAPI } from "@/services/api";
 
 export default function DosageCalculator() {
   const [drugName, setDrugName] = useState("");
@@ -15,38 +17,267 @@ export default function DosageCalculator() {
   const [category, setCategory] = useState("");
   const [calculatedDose, setCalculatedDose] = useState("");
   const [frequency, setFrequency] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleCalculate = () => {
-    if (!drugName || !age || !weight) {
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast({
+          title: "Voice Input",
+          description: "Listening for patient information...",
+        });
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Transcript:", transcript);
+        toast({
+          title: "Voice Input",
+          description: `Heard: "${transcript}"`,
+        });
+        // Extract form fields from voice input
+        handleVoiceExtraction(transcript);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event) => {
+        setIsListening(false);
+        console.error("Speech recognition error:", event.error);
+
+        let errorMessage = "An error occurred during speech recognition.";
+        if (event.error === "no-speech") {
+          errorMessage = "No speech was detected. Please try again.";
+        } else if (event.error === "audio-capture") {
+          errorMessage = "Microphone is not available. Please check your settings.";
+        } else if (event.error === "not-allowed") {
+          errorMessage = "Permission to use the microphone is blocked. Please allow access.";
+        }
+
+        toast({
+          title: "Voice Input Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      };
+
+      setSpeechRecognition(recognition);
+    } else {
+      toast({
+        title: "Speech Recognition Not Supported",
+        description: "Your browser does not support speech recognition. Please use the manual input fields instead.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  // Calculate Body Surface Area (BSA) using Mosteller formula
+  const calculateBSA = (weight: number, height: number = 120) => {
+    // BSA (m²) = √[(height(cm) × weight(kg)) / 3600]
+    // Using average height if not provided
+    return Math.sqrt((height * weight) / 3600);
+  };
+
+  // Medical dosage calculation with proper formulas
+  const calculateDosageFormula = (drug: string, ageValue: number, weightValue: number) => {
+    const drugLower = drug.toLowerCase();
+    
+    // Comprehensive drug database with proper medical formulas
+    const drugDatabase: { [key: string]: {
+      pediatricDose: { mgPerKg: number, minAge?: number, maxAge?: number },
+      adultDose: { mg: number },
+      maxSingleDose: number,
+      maxDailyDose: number,
+      frequency: string,
+      contraindications?: string[]
+    }} = {
+      'paracetamol': {
+        pediatricDose: { mgPerKg: 15, minAge: 0, maxAge: 18 },
+        adultDose: { mg: 500 },
+        maxSingleDose: 1000,
+        maxDailyDose: 4000,
+        frequency: 'Every 4-6 hours (max 4 doses/day)'
+      },
+      'panadol': {
+        pediatricDose: { mgPerKg: 15, minAge: 0, maxAge: 18 },
+        adultDose: { mg: 500 },
+        maxSingleDose: 1000,
+        maxDailyDose: 4000,
+        frequency: 'Every 4-6 hours (max 4 doses/day)'
+      },
+      'ibuprofen': {
+        pediatricDose: { mgPerKg: 10, minAge: 6, maxAge: 18 },
+        adultDose: { mg: 400 },
+        maxSingleDose: 600,
+        maxDailyDose: 2400,
+        frequency: 'Every 6-8 hours (max 3 doses/day)',
+        contraindications: ['under 6 months', 'asthma', 'kidney disease']
+      },
+      'amoxicillin': {
+        pediatricDose: { mgPerKg: 25, minAge: 0, maxAge: 18 },
+        adultDose: { mg: 500 },
+        maxSingleDose: 1000,
+        maxDailyDose: 3000,
+        frequency: 'Every 8 hours (3 times daily)'
+      },
+      'aspirin': {
+        pediatricDose: { mgPerKg: 0, minAge: 16, maxAge: 18 }, // Not recommended for children
+        adultDose: { mg: 325 },
+        maxSingleDose: 1000,
+        maxDailyDose: 4000,
+        frequency: 'Every 4-6 hours',
+        contraindications: ['under 16 years', 'Reye syndrome risk']
+      }
+    };
+    
+    // Find matching drug
+    const matchedDrug = Object.keys(drugDatabase).find(key => drugLower.includes(key));
+    
+    if (!matchedDrug) {
+      return {
+        dose: 'Drug not found in database',
+        frequency: 'Consult healthcare professional',
+        warnings: ['Unknown drug - professional consultation required']
+      };
+    }
+    
+    const drugInfo = drugDatabase[matchedDrug];
+    let calculatedDose: number;
+    let warnings: string[] = [];
+    
+    // Age-based dosing logic
+    if (ageValue < 18) {
+      // Pediatric dosing
+      if (drugInfo.pediatricDose.minAge && ageValue < drugInfo.pediatricDose.minAge) {
+        warnings.push(`Not recommended for children under ${drugInfo.pediatricDose.minAge} years`);
+      }
+      
+      // Weight-based calculation for pediatrics
+      calculatedDose = drugInfo.pediatricDose.mgPerKg * weightValue;
+      
+      // Apply safety limits
+      if (calculatedDose > drugInfo.maxSingleDose) {
+        calculatedDose = drugInfo.maxSingleDose;
+        warnings.push('Dose limited to maximum safe amount');
+      }
+    } else {
+      // Adult dosing
+      calculatedDose = drugInfo.adultDose.mg;
+      
+      // Weight adjustment for adults (if significantly different from average 70kg)
+      if (weightValue < 50) {
+        calculatedDose = calculatedDose * (weightValue / 70);
+        warnings.push('Dose adjusted for low body weight');
+      } else if (weightValue > 100) {
+        calculatedDose = Math.min(calculatedDose * 1.2, drugInfo.maxSingleDose);
+        warnings.push('Dose may need adjustment for high body weight');
+      }
+    }
+    
+    // Add contraindication warnings
+    if (drugInfo.contraindications) {
+      warnings.push(...drugInfo.contraindications.map(c => `Contraindication: ${c}`));
+    }
+    
+    // Calculate daily dose
+    const dailyDoses = drugInfo.frequency.includes('3 times') ? 3 : 
+                      drugInfo.frequency.includes('4 doses') ? 4 : 
+                      drugInfo.frequency.includes('6-8 hours') ? 3 : 4;
+    
+    const totalDailyDose = calculatedDose * dailyDoses;
+    
+    if (totalDailyDose > drugInfo.maxDailyDose) {
+      warnings.push(`Total daily dose exceeds maximum (${drugInfo.maxDailyDose}mg/day)`);
+    }
+    
+    return {
+      dose: `${calculatedDose.toFixed(1)} mg per dose`,
+      frequency: drugInfo.frequency,
+      dailyDose: `${totalDailyDose.toFixed(1)} mg/day`,
+      maxDailyDose: `${drugInfo.maxDailyDose} mg/day`,
+      warnings: warnings.length > 0 ? warnings : ['Always consult healthcare professional']
+    };
+  };
+
+  const handleCalculate = useCallback(() => {
+    if (!drugName.trim() || !age.trim() || !weight.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please provide drug name, age, and weight.",
         variant: "destructive",
       });
       return;
     }
 
-    // Mock calculation - in real app, this would call an AI service
-    const mockDose = `${Math.round(parseFloat(weight) * 0.5)} mg`;
-    const mockFrequency = "Every 8 hours";
+    const ageValue = parseInt(age);
+    const weightValue = parseFloat(weight);
     
-    setCalculatedDose(mockDose);
-    setFrequency(mockFrequency);
-    
-    toast({
-      title: "Dosage Calculated",
-      description: "AI-powered calculation completed successfully",
-    });
-  };
+    if (isNaN(ageValue) || isNaN(weightValue)) {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter valid numbers for age and weight.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // const handleVoiceInput = () => {
-  //   if (isListening) {
-  //     stopListening();
-  //   } else {
-  //     startListening();
-  //   }
-  // };
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = calculateDosageFormula(drugName, ageValue, weightValue);
+      
+      // Format the complete dosage information
+      const dosageInfo = `- ${result.dose}\n- ${result.dailyDose ? `Daily Total: ${result.dailyDose}` : ''}\n- ${result.maxDailyDose ? `Max Daily Dose: ${result.maxDailyDose}` : ''}`;
+      const frequencyInfo = `${result.frequency}`;
+      
+      setCalculatedDose(dosageInfo);
+      setFrequency(frequencyInfo);
+
+      toast({
+        title: "Dosage Calculated",
+        description: "Medical formula-based calculation completed",
+      });
+    } catch (error: any) {
+      setError("Calculation error occurred");
+      toast({
+        title: "Calculation Failed",
+        description: "An error occurred during calculation.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [drugName, age, weight, toast]);
+
+  const handleVoiceInput = () => {
+    if (speechRecognition) {
+      if (isListening) {
+        speechRecognition.stop();
+      } else {
+        speechRecognition.start();
+      }
+    } else {
+      toast({
+        title: "Speech Recognition Not Ready",
+        description: "Please wait, or your browser might not support it.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Layout>
@@ -64,34 +295,33 @@ export default function DosageCalculator() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Patient Information</h2>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
-                  
+                  onClick={handleVoiceInput}
                 >
-                  
+                  {isListening ? (
                     <>
                       <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
                       Listening...
                     </>
-                  
+                  ) : (
                     <>
                       <Mic className="w-4 h-4 mr-2" />
                       Voice Input
                     </>
-                  
+                  )}
                 </Button>
-                
-                
-                  <Button 
-                    variant="outline" 
+                {isListening && (
+                  <Button
+                    variant="outline"
                     size="sm"
-                    
+                    onClick={() => speechRecognition?.stop()}
                   >
                     <VolumeX className="w-4 h-4 mr-2" />
                     Stop
                   </Button>
-                
+                )}
               </div>
             </div>
 
@@ -143,13 +373,14 @@ export default function DosageCalculator() {
                 </Select>
               </div>
 
-              <Button 
-                onClick={handleCalculate} 
+              <Button
+                onClick={() => handleCalculate()}
                 className="w-full"
                 size="lg"
+                disabled={loading}
               >
                 <Calculator className="w-5 h-5 mr-2" />
-                Calculate Dosage
+                {loading ? "Calculating..." : "Calculate Dosage"}
               </Button>
             </div>
           </Card>
@@ -157,12 +388,12 @@ export default function DosageCalculator() {
           {/* Results */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-6">Calculated Dosage</h2>
-            
+
             <div className="space-y-6">
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Dosage</Label>
                 <div className="mt-2 p-4 bg-muted rounded-lg">
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-semibold whitespace-pre-line">
                     {calculatedDose || "Enter information to calculate"}
                   </p>
                 </div>
@@ -171,7 +402,7 @@ export default function DosageCalculator() {
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Frequency</Label>
                 <div className="mt-2 p-4 bg-muted rounded-lg">
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-semibold whitespace-pre-line">
                     {frequency || "Dosage frequency will appear here"}
                   </p>
                 </div>
@@ -181,11 +412,17 @@ export default function DosageCalculator() {
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg">
                   <h3 className="font-semibold text-sm mb-2">Important Notes:</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• This is an AI-generated suggestion</li>
                     <li>• Always consult a healthcare professional</li>
                     <li>• Consider patient-specific factors</li>
                     <li>• Monitor for side effects</li>
                   </ul>
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-6 p-4 bg-red-100 rounded-lg">
+                  <h3 className="font-semibold text-sm mb-2">Error:</h3>
+                  <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
             </div>
@@ -194,4 +431,8 @@ export default function DosageCalculator() {
       </div>
     </Layout>
   );
+}
+
+function handleVoiceExtraction(transcript: string) {
+  throw new Error("Function not implemented.");
 }

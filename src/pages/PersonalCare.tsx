@@ -2,22 +2,22 @@ import { Layout } from "@/components/Layout/Layout";
 import CategoryCard from "@/components/PersonalCare/CategoryCard";
 
 const personalCareCategories = [
-  { name: "Skincare" },
+  { name: "Skin care" },
   { name: "Female Care" },
   { name: "Oral Care" },
-  { name: "Haircare" },
+  { name: "Hair care" },
   { name: "Men’s Care" },
-  { name: "Mother & Baby Care" },
+  { name: "Baby Care" },
 ];
 
 export default function PersonalCare() {
   const categoryImages: { [key: string]: string } = {
-    "Skincare": "/placeholder.svg",
+    "Skin care": "/placeholder.svg",
     "Female Care": "/placeholder.svg",
     "Oral Care": "/placeholder.svg",
-    "Haircare": "/placeholder.svg",
+    "Hair care": "/placeholder.svg",
     "Men’s Care": "/placeholder.svg",
-    "Mother & Baby Care": "/placeholder.svg",
+    "Baby Care": "/placeholder.svg",
   };
 
   return (

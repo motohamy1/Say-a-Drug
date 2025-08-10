@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend server for Say Pharmacy",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js",
@@ -19,11 +20,8 @@
     "express-rate-limit": "^8.0.1",
     "express-validator": "^7.2.1",
     "form-data": "^4.0.0",
-<<<<<<< HEAD
     "mongodb": "^6.18.0",
     "mongoose": "^8.17.0",
-=======
->>>>>>> 564621e5aa9ae889e7edd4ba9dbb0b0723380926
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.7.0",
     "puppeteer": "^24.15.0",

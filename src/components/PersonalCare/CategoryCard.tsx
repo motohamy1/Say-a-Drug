@@ -17,7 +17,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ title, imgSrc }) => {
           className="w-full h-full object-cover"
         />
       </div>
-      <p className="mt-3 text-foreground text-base font-medium text-center max-w-24">{title}</p>
+      <p className="mt-3 text-foreground text-sm font-medium text-center max-w-32 leading-tight">{title}</p>
     </div>
   );
 };

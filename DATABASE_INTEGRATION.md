@@ -106,9 +106,9 @@ node test-database-integration.js
 ### Manual Testing
 1. Start the backend server: `npm run dev` (in backend directory)
 2. Test endpoints:
-   - `GET http://localhost:5000/api/database/status`
-   - `GET http://localhost:5000/api/medicines?page=1&limit=10`
-   - `GET http://localhost:5000/api/medicines/search?q=Panadol`
+   - `GET http://localhost:3001/api/database/status`
+   - `GET http://localhost:3001/api/medicines?page=1&limit=10`
+   - `GET http://localhost:3001/api/medicines/search?q=Panadol`
 
 ## Configuration
 
@@ -176,16 +176,16 @@ No additional environment variables are required. The system uses existing confi
 ### Debug Commands
 ```bash
 # Check database status
-curl http://localhost:5000/api/database/status
+curl http://localhost:3001/api/database/status
 
 # Get statistics
-curl http://localhost:5000/api/database/statistics
+curl http://localhost:3001/api/database/statistics
 
 # Force refresh
-curl -X POST http://localhost:5000/api/database/refresh
+curl -X POST http://localhost:3001/api/database/refresh
 
 # Search drugs
-curl "http://localhost:5000/api/medicines/search?q=Panadol"
+curl "http://localhost:3001/api/medicines/search?q=Panadol"
 ```
 
 ## Next Steps

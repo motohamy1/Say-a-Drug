@@ -8,11 +8,11 @@ export function ThemeToggle() {
   return (
     <div
       onClick={toggleDarkMode}
-      className="relative w-16 h-8 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300"
+      className="relative w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300"
       style={{ backgroundColor: isDarkMode ? '#000000' : '#ff3d00' }}
     >
       <div
-        className="w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center"
+        className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center"
         style={{ transform: isDarkMode ? 'translateX(28px)' : 'translateX(0)' }}
       >
         {isDarkMode ? (
