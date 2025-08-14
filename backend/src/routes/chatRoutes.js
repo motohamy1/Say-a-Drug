@@ -189,14 +189,18 @@ router.post('/voice', async (req, res) => {
  * POST /api/chat/transcribe
  * Voice transcription endpoint
  */
-// @ts-ignore
 router.post('/transcribe', async (req, res) => {
   try {
-    // Simulated transcription for now
+    // For now, return a placeholder that indicates voice input was received
+    // In a real implementation, you would:
+    // 1. Process the audio file from req.files or req.body
+    // 2. Use Gemini AI or another service to transcribe
+    // 3. Return the actual transcribed text
+    
     res.json({
       status: 'success',
       data: {
-        text: "This is a simulated transcription. In a real implementation, this would process actual voice input.",
+        text: "Voice input received - please type your message instead",
         timestamp: new Date()
       }
     });

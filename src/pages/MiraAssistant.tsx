@@ -19,12 +19,7 @@ const MiraAssistant: React.FC = () => {
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,177 +29,159 @@ const MiraAssistant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const initializeAudioAnalysis = (stream: MediaStream) => {
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const analyser = audioContext.createAnalyser();
-      const microphone = audioContext.createMediaStreamSource(stream);
 
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      microphone.connect(analyser);
 
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-
-      monitorAudioLevel();
-    } catch (error) {
-      console.error('Error initializing audio analysis:', error);
-      setVoiceError('Failed to initialize audio analysis');
+  // Use browser's built-in speech recognition instead of backend transcription
+  const initializeSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      console.error('Speech recognition not supported');
+      setVoiceError('Speech recognition not supported in this browser');
+      return null;
     }
-  };
 
-  const monitorAudioLevel = () => {
-    if (!analyserRef.current) return;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true; // Keep listening for longer
+    recognition.interimResults = true; // Show interim results
+    recognition.lang = 'en-US';
+    recognition.maxAlternatives = 3; // Get more alternatives for better drug name recognition
+    
+    // Add timeout to stop after reasonable time
+    let timeoutId: NodeJS.Timeout;
+    
+    const stopWithTimeout = () => {
+      timeoutId = setTimeout(() => {
+        console.log('🎤 Auto-stopping after 10 seconds');
+        recognition.stop();
+      }, 10000); // 10 seconds timeout
+    };
 
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    recognition.onstart = () => {
+      console.log('🎤 Speech recognition started');
+      setIsRecording(true);
+      setVoiceError(null);
+      stopWithTimeout(); // Start timeout
+    };
 
-    const updateLevel = () => {
-      if (!analyserRef.current) return;
-
-      analyserRef.current.getByteFrequencyData(dataArray);
-
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        sum += dataArray[i] * dataArray[i];
+    recognition.onresult = (event) => {
+      console.log('🎤 Speech recognition result event:', event);
+      
+      let finalTranscript = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        
+        // Check all alternatives for better drug name recognition
+        let bestTranscript = result[0].transcript;
+        for (let j = 0; j < result.length; j++) {
+          const alternative = result[j].transcript.toLowerCase();
+          // Prefer alternatives that contain drug names
+          if (alternative.includes('panadol') || alternative.includes('abimol') || 
+              alternative.includes('aspirin') || alternative.includes('ibuprofen')) {
+            bestTranscript = result[j].transcript;
+            console.log('🎤 Found drug name in alternative:', bestTranscript);
+            break;
+          }
+        }
+        
+        console.log('🎤 Transcript:', bestTranscript, 'Final:', result.isFinal);
+        
+        if (result.isFinal) {
+          finalTranscript += bestTranscript;
+        }
       }
-      const rms = Math.sqrt(sum / dataArray.length);
-      const level = Math.min(100, (rms / 128) * 100);
-
-      setAudioLevel(level);
-
-      if (isRecording) {
-        animationFrameRef.current = requestAnimationFrame(updateLevel);
+      
+      if (finalTranscript.trim()) {
+        console.log('🎤 Final transcript, sending to AI:', finalTranscript);
+        clearTimeout(timeoutId); // Clear timeout
+        recognition.stop(); // Stop after getting final result
+        handleSendMessage(finalTranscript);
       }
     };
 
-    updateLevel();
-  };
+    recognition.onend = () => {
+      console.log('🎤 Speech recognition ended');
+      clearTimeout(timeoutId); // Clear timeout
+      setIsRecording(false);
+      setAudioLevel(0);
+    };
 
-  const initializeMediaRecorder = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        }
-      });
-
-      streamRef.current = stream;
-
-      initializeAudioAnalysis(stream);
-
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        processRecording();
-      };
-
-      setVoiceError(null);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      setVoiceError('Microphone access denied. Please allow microphone permissions.');
-    }
-  };
-
-  const processRecording = async () => {
-    if (audioChunksRef.current.length === 0) {
-      setVoiceError('No audio data recorded');
-      return;
-    }
-
-    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-    audioChunksRef.current = [];
-
-    try {
-      await sendAudioForTranscription(audioBlob);
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      setVoiceError('Failed to process audio recording');
-    }
-  };
-
-  const sendAudioForTranscription = async (audioBlob: Blob) => {
-    setIsLoading(true);
-
-    try {
-      console.log('Sending audio to backend for Gemini transcription...');
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/transcribe`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-      console.log('Backend API Response Status:', response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    recognition.onerror = (event) => {
+      console.error('🎤 Speech recognition error:', event.error);
+      clearTimeout(timeoutId); // Clear timeout
+      setIsRecording(false);
+      setAudioLevel(0);
+      
+      let errorMessage = 'Speech recognition failed';
+      if (event.error === 'no-speech') {
+        errorMessage = 'No speech detected. Please speak clearly and try again.';
+      } else if (event.error === 'not-allowed') {
+        errorMessage = 'Microphone access denied. Please allow microphone permissions.';
+      } else if (event.error === 'network') {
+        errorMessage = 'Network error. Please check your connection.';
       }
+      
+      setVoiceError(errorMessage);
+    };
 
-      const data = await response.json();
-      console.log('Transcription Data:', data);
-      const transcribedText = data.text || data.transcription || '';
+    recognition.onspeechstart = () => {
+      console.log('🎤 Speech detected');
+    };
 
-      if (transcribedText.trim()) {
-        setInputValue(prev => prev + (prev ? ' ' : '') + transcribedText);
-      } else {
-        setVoiceError('No speech detected in recording');
-        console.log('No speech detected or empty transcription.');
-      }
+    recognition.onspeechend = () => {
+      console.log('🎤 Speech ended');
+    };
 
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      setVoiceError('Failed to transcribe audio. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    recognition.onnomatch = () => {
+      console.log('🎤 No speech match found');
+      setVoiceError('Could not understand speech. Please try again.');
+    };
+
+    return recognition;
   };
 
-  const toggleRecording = async () => {
+  const toggleRecording = () => {
+    console.log('🎤 Toggle recording clicked, isRecording:', isRecording, 'isLoading:', isLoading);
+    
     if (isLoading) return;
 
     if (isRecording) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        mediaRecorderRef.current.stop();
+      console.log('🎤 Stopping speech recognition');
+      // Stop speech recognition
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
       }
-      setIsRecording(false);
-
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-      setAudioLevel(0);
     } else {
-      if (!mediaRecorderRef.current) {
-        await initializeMediaRecorder();
-      }
-
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'inactive') {
-        audioChunksRef.current = [];
-        mediaRecorderRef.current.start();
-        setIsRecording(true);
-        setVoiceError(null);
-
-        monitorAudioLevel();
+      console.log('🎤 Starting speech recognition');
+      // Start speech recognition
+      const recognition = initializeSpeechRecognition();
+      if (recognition) {
+        speechRecognitionRef.current = recognition;
+        try {
+          recognition.start();
+          console.log('🎤 Speech recognition start() called');
+        } catch (error) {
+          console.error('🎤 Error starting recognition:', error);
+          setVoiceError('Failed to start speech recognition');
+        }
       }
     }
   };
+
+  // Test speech recognition availability
+  const testSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    console.log('🎤 Speech Recognition available:', !!SpeechRecognition);
+    console.log('🎤 User agent:', navigator.userAgent);
+    console.log('🎤 Is HTTPS:', location.protocol === 'https:');
+    console.log('🎤 Is localhost:', location.hostname === 'localhost');
+  };
+
+  // Test on component mount
+  useEffect(() => {
+    testSpeechRecognition();
+  }, []);
 
   const handleSendMessage = async (messageText?: string) => {
     const message = messageText || inputValue.trim();
@@ -269,14 +246,8 @@ const MiraAssistant: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.stop();
       }
     };
   }, []);

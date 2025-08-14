@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Calculator, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { Calculator } from "lucide-react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { processVoiceCommand, speakResponse } from "@/utils/voiceUtils";
+
 // import { drugsAPI } from "@/services/api";
 
 export default function DosageCalculator() {
@@ -17,72 +17,12 @@ export default function DosageCalculator() {
   const [category, setCategory] = useState("");
   const [calculatedDose, setCalculatedDose] = useState("");
   const [frequency, setFrequency] = useState("");
-  const [isListening, setIsListening] = useState(false);
-  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        toast({
-          title: "Voice Input",
-          description: "Listening for patient information...",
-        });
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Transcript:", transcript);
-        toast({
-          title: "Voice Input",
-          description: `Heard: "${transcript}"`,
-        });
-        // Extract form fields from voice input
-        handleVoiceExtraction(transcript);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.onerror = (event) => {
-        setIsListening(false);
-        console.error("Speech recognition error:", event.error);
-
-        let errorMessage = "An error occurred during speech recognition.";
-        if (event.error === "no-speech") {
-          errorMessage = "No speech was detected. Please try again.";
-        } else if (event.error === "audio-capture") {
-          errorMessage = "Microphone is not available. Please check your settings.";
-        } else if (event.error === "not-allowed") {
-          errorMessage = "Permission to use the microphone is blocked. Please allow access.";
-        }
-
-        toast({
-          title: "Voice Input Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      };
-
-      setSpeechRecognition(recognition);
-    } else {
-      toast({
-        title: "Speech Recognition Not Supported",
-        description: "Your browser does not support speech recognition. Please use the manual input fields instead.",
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
 
   // Calculate Body Surface Area (BSA) using Mosteller formula
   const calculateBSA = (weight: number, height: number = 120) => {
@@ -263,66 +203,26 @@ export default function DosageCalculator() {
     }
   }, [drugName, age, weight, toast]);
 
-  const handleVoiceInput = () => {
-    if (speechRecognition) {
-      if (isListening) {
-        speechRecognition.stop();
-      } else {
-        speechRecognition.start();
-      }
-    } else {
-      toast({
-        title: "Speech Recognition Not Ready",
-        description: "Please wait, or your browser might not support it.",
-        variant: "destructive",
-      });
-    }
-  };
+
+
+
+
+
+
+
 
   return (
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Dosage Calculator</h1>
-          <p className="text-muted-foreground">
-            AI-powered medication dosage calculations with mira's assistance
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Form */}
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="mb-6">
               <h2 className="text-xl font-semibold">Patient Information</h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleVoiceInput}
-                >
-                  {isListening ? (
-                    <>
-                      <Volume2 className="w-4 h-4 mr-2 animate-pulse" />
-                      Listening...
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-4 h-4 mr-2" />
-                      Voice Input
-                    </>
-                  )}
-                </Button>
-                {isListening && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => speechRecognition?.stop()}
-                  >
-                    <VolumeX className="w-4 h-4 mr-2" />
-                    Stop
-                  </Button>
-                )}
-              </div>
             </div>
 
             <div className="space-y-4">
@@ -433,6 +333,4 @@ export default function DosageCalculator() {
   );
 }
 
-function handleVoiceExtraction(transcript: string) {
-  throw new Error("Function not implemented.");
-}
+

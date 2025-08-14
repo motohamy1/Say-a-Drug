@@ -340,8 +340,10 @@ class AIService {
    * Process natural language voice commands for dosage
    * @param {any} command
    */
-  async processVoiceDosageCommand(command) {
+  async processVoiceDosageCommand(command, retryCount = 0) {
     try {
+      console.log('Processing voice dosage command:', command);
+      
       const prompt = `
         Extract medication dosage information from this text: "${command}"
         
@@ -356,17 +358,66 @@ class AIService {
         Examples:
         - "panadol for 8 year old" → {"drugName": "panadol", "age": "8", "weight": "not specified", "category": "not specified"}
         - "aspirin 25kg adult" → {"drugName": "aspirin", "age": "not specified", "weight": "25kg", "category": "adult"}
+        - "drug name is panadol patient age is 20 weight is 70 kilogram" → {"drugName": "panadol", "age": "20", "weight": "70", "category": "not specified"}
         
         Return only the JSON, no other text.
       `;
       
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      return response.text();
+      const responseText = response.text();
+      
+      console.log('Voice processing AI response:', responseText);
+      
+      return responseText;
     } catch (error) {
       console.error('Error processing voice dosage command:', error);
+      
+      // Retry for API overload (503 errors)
+      if (error.status === 503 && retryCount < 2) {
+        console.log(`API overloaded, retrying in ${(retryCount + 1) * 2} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
+        return this.processVoiceDosageCommand(command, retryCount + 1);
+      }
+      
+      // Fallback for persistent API issues
+      if (error.status === 503) {
+        console.log('API still overloaded, using fallback parsing');
+        return this.fallbackVoiceProcessing(command);
+      }
+      
       throw new Error('Failed to process voice dosage command with AI');
     }
+  }
+
+  fallbackVoiceProcessing(command) {
+    const text = command.toLowerCase();
+    const result = {
+      drugName: 'not specified',
+      age: 'not specified', 
+      weight: 'not specified',
+      category: 'not specified'
+    };
+    
+    // Extract age
+    const ageMatch = text.match(/(\d+)\s*(?:year|yr)/i);
+    if (ageMatch) result.age = ageMatch[1];
+    
+    // Extract weight
+    const weightMatch = text.match(/(\d+)\s*(?:kg|kilogram)/i);
+    if (weightMatch) result.weight = weightMatch[1];
+    
+    // Extract common drug names
+    const drugs = ['panadol', 'aspirin', 'ibuprofen', 'amoxicillin', 'acetaminophen'];
+    for (const drug of drugs) {
+      if (text.includes(drug)) {
+        result.drugName = drug;
+        break;
+      }
+    }
+    
+    console.log('Fallback processing result:', result);
+    return JSON.stringify(result);
   }
 }
 
