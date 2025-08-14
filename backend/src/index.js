@@ -10,6 +10,9 @@ import drugRoutes from './routes/drugRoutes.js';
 // Load environment variables
 dotenv.config();
 
+// Log the API key to verify it's loaded
+console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Loaded' : 'Not Loaded');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
