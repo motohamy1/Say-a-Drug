@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calculator } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // import { drugsAPI } from "@/services/api";
 
@@ -21,6 +22,7 @@ export default function DosageCalculator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
 
 
@@ -155,8 +157,8 @@ export default function DosageCalculator() {
   const handleCalculate = useCallback(() => {
     if (!drugName.trim() || !age.trim() || !weight.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please provide drug name, age, and weight.",
+        title: t('toast.missingInfo'),
+        description: t('toast.provideDrugAgeWeight'),
         variant: "destructive",
       });
       return;
@@ -167,8 +169,8 @@ export default function DosageCalculator() {
     
     if (isNaN(ageValue) || isNaN(weightValue)) {
       toast({
-        title: "Invalid Input",
-        description: "Please enter valid numbers for age and weight.",
+        title: t('toast.invalidInput'),
+        description: t('toast.validNumbers'),
         variant: "destructive",
       });
       return;
@@ -188,14 +190,14 @@ export default function DosageCalculator() {
       setFrequency(frequencyInfo);
 
       toast({
-        title: "Dosage Calculated",
-        description: "Medical formula-based calculation completed",
+        title: t('toast.dosageCalculated'),
+        description: t('toast.calculationCompleted'),
       });
     } catch (error: any) {
       setError("Calculation error occurred");
       toast({
-        title: "Calculation Failed",
-        description: "An error occurred during calculation.",
+        title: t('toast.calculationFailed'),
+        description: t('toast.calculationError'),
         variant: "destructive",
       });
     } finally {
@@ -215,22 +217,23 @@ export default function DosageCalculator() {
     <Layout>
       <div className="p-8 max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">Dosage Calculator</h1>
+          <h1 className="text-3xl font-bold mb-4">{t('dosage.title')}</h1>
+          <p className="text-muted-foreground">{t('dosage.subtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Form */}
           <Card className="p-6">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold">Patient Information</h2>
+              <h2 className="text-xl font-semibold">{t('dosage.patientInfo')}</h2>
             </div>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="drugName">Drug Name</Label>
+                <Label htmlFor="drugName">{t('dosage.drugName')}</Label>
                 <Input
                   id="drugName"
-                  placeholder="Enter drug name"
+                  placeholder={t('dosage.drugNamePlaceholder')}
                   value={drugName}
                   onChange={(e) => setDrugName(e.target.value)}
                 />
@@ -238,19 +241,19 @@ export default function DosageCalculator() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="age">{t('dosage.age')}</Label>
                   <Input
                     id="age"
-                    placeholder="Enter age"
+                    placeholder={t('dosage.agePlaceholder')}
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Label htmlFor="weight">{t('dosage.weight')}</Label>
                   <Input
                     id="weight"
-                    placeholder="Enter weight"
+                    placeholder={t('dosage.weightPlaceholder')}
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                   />
@@ -258,17 +261,17 @@ export default function DosageCalculator() {
               </div>
 
               <div>
-                <Label>Special Categories</Label>
+                <Label>{t('dosage.specialCategories')}</Label>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select if applicable" />
+                    <SelectValue placeholder={t('dosage.selectApplicable')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pediatric">Pediatric</SelectItem>
-                    <SelectItem value="geriatric">Geriatric</SelectItem>
-                    <SelectItem value="pregnancy">Pregnancy</SelectItem>
-                    <SelectItem value="renal">Renal Impairment</SelectItem>
-                    <SelectItem value="hepatic">Hepatic Impairment</SelectItem>
+                    <SelectItem value="pediatric">{t('dosage.pediatric')}</SelectItem>
+                    <SelectItem value="geriatric">{t('dosage.geriatric')}</SelectItem>
+                    <SelectItem value="pregnancy">{t('dosage.pregnancy')}</SelectItem>
+                    <SelectItem value="renal">{t('dosage.renal')}</SelectItem>
+                    <SelectItem value="hepatic">{t('dosage.hepatic')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -280,48 +283,48 @@ export default function DosageCalculator() {
                 disabled={loading}
               >
                 <Calculator className="w-5 h-5 mr-2" />
-                {loading ? "Calculating..." : "Calculate Dosage"}
+                {loading ? t('dosage.calculating') : t('dosage.calculate')}
               </Button>
             </div>
           </Card>
 
           {/* Results */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Calculated Dosage</h2>
+            <h2 className="text-xl font-semibold mb-6">{t('dosage.calculatedDosage')}</h2>
 
             <div className="space-y-6">
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Dosage</Label>
+                <Label className="text-sm font-medium text-muted-foreground">{t('dosage.dosage')}</Label>
                 <div className="mt-2 p-4 bg-muted rounded-lg">
                   <p className="text-lg font-semibold whitespace-pre-line">
-                    {calculatedDose || "Enter information to calculate"}
+                    {calculatedDose || t('dosage.enterInfo')}
                   </p>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Frequency</Label>
+                <Label className="text-sm font-medium text-muted-foreground">{t('dosage.frequency')}</Label>
                 <div className="mt-2 p-4 bg-muted rounded-lg">
                   <p className="text-lg font-semibold whitespace-pre-line">
-                    {frequency || "Dosage frequency will appear here"}
+                    {frequency || t('dosage.frequencyAppear')}
                   </p>
                 </div>
               </div>
 
               {calculatedDose && (
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-                  <h3 className="font-semibold text-sm mb-2">Important Notes:</h3>
+                  <h3 className="font-semibold text-sm mb-2">{t('dosage.importantNotes')}</h3>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Always consult a healthcare professional</li>
-                    <li>• Consider patient-specific factors</li>
-                    <li>• Monitor for side effects</li>
+                    <li>{t('dosage.consultProfessional')}</li>
+                    <li>{t('dosage.considerFactors')}</li>
+                    <li>{t('dosage.monitorEffects')}</li>
                   </ul>
                 </div>
               )}
 
               {error && (
                 <div className="mt-6 p-4 bg-red-100 rounded-lg">
-                  <h3 className="font-semibold text-sm mb-2">Error:</h3>
+                  <h3 className="font-semibold text-sm mb-2">{t('dosage.error')}</h3>
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}

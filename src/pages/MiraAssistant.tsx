@@ -1,6 +1,7 @@
 import { Layout } from '@/components/Layout/Layout';
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   id: number;
@@ -9,7 +10,25 @@ interface Message {
   isError?: boolean;
 }
 
+const translations = {
+  "Type your message or use voice recording...": { en: "Type your message or use voice recording...", ar: "اكتب رسالتك أو استخدم التسجيل الصوتي..." },
+  "Thinking...": { en: "Thinking...", ar: "أفكر..." },
+  "Sorry, I couldn't process that request. Please try again.": { en: "Sorry, I couldn't process that request. Please try again.", ar: "عذراً، لم أتمكن من معالجة هذا الطلب. الرجاء المحاولة مرة أخرى." },
+  "Stop recording": { en: "Stop recording", ar: "إيقاف التسجيل" },
+  "Start voice recording": { en: "Start voice recording", ar: "بدء التسجيل الصوتي" },
+  "Recording... Click mic to stop": { en: "🔴 Recording... Click mic to stop", ar: "🔴 جاري التسجيل... انقر على الميكروفون للإيقاف" },
+  'Speech recognition not supported in this browser': { en: 'Speech recognition not supported in this browser', ar: 'التعرف على الكلام غير مدعوم في هذا المتصفح' },
+  'No speech detected. Please speak clearly and try again.': { en: 'No speech detected. Please speak clearly and try again.', ar: 'لم يتم اكتشاف أي كلام. يرجى التحدث بوضوح والمحاولة مرة أخرى.' },
+  'Microphone access denied. Please allow microphone permissions.': { en: 'Microphone access denied. Please allow microphone permissions.', ar: 'تم رفض الوصول إلى الميكروفون. يرجى السماح بأذونات الميكروفون.' },
+  'Network error. Please check your connection.': { en: 'Network error. Please check your connection.', ar: 'خطأ في الشبكة. يرجى التحقق من اتصالك.' },
+  'Speech recognition failed': { en: 'Speech recognition failed', ar: 'فشل التعرف على الكلام' },
+  'Could not understand speech. Please try again.': { en: 'Could not understand speech. Please try again.', ar: 'لم أستطع فهم الكلام. يرجى المحاولة مرة أخرى.' },
+  'Failed to start speech recognition': { en: 'Failed to start speech recognition', ar: 'فشل بدء التعرف على الكلام' },
+};
+
+
 const MiraAssistant: React.FC = () => {
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +39,10 @@ const MiraAssistant: React.FC = () => {
   const [audioLevel, setAudioLevel] = useState(0);
 
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const t = (key: keyof typeof translations) => {
+    return translations[key][language];
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,14 +60,14 @@ const MiraAssistant: React.FC = () => {
     
     if (!SpeechRecognition) {
       console.error('Speech recognition not supported');
-      setVoiceError('Speech recognition not supported in this browser');
+      setVoiceError(t('Speech recognition not supported in this browser'));
       return null;
     }
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true; // Keep listening for longer
     recognition.interimResults = true; // Show interim results
-    recognition.lang = 'en-US';
+    recognition.lang = language === 'ar' ? 'ar-EG' : 'en-US';
     recognition.maxAlternatives = 3; // Get more alternatives for better drug name recognition
     
     // Add timeout to stop after reasonable time
@@ -113,16 +136,16 @@ const MiraAssistant: React.FC = () => {
       setIsRecording(false);
       setAudioLevel(0);
       
-      let errorMessage = 'Speech recognition failed';
+      let errorMessageKey: keyof typeof translations = 'Speech recognition failed';
       if (event.error === 'no-speech') {
-        errorMessage = 'No speech detected. Please speak clearly and try again.';
+        errorMessageKey = 'No speech detected. Please speak clearly and try again.';
       } else if (event.error === 'not-allowed') {
-        errorMessage = 'Microphone access denied. Please allow microphone permissions.';
+        errorMessageKey = 'Microphone access denied. Please allow microphone permissions.';
       } else if (event.error === 'network') {
-        errorMessage = 'Network error. Please check your connection.';
+        errorMessageKey = 'Network error. Please check your connection.';
       }
       
-      setVoiceError(errorMessage);
+      setVoiceError(t(errorMessageKey));
     };
 
     recognition.onspeechstart = () => {
@@ -135,7 +158,7 @@ const MiraAssistant: React.FC = () => {
 
     recognition.onnomatch = () => {
       console.log('🎤 No speech match found');
-      setVoiceError('Could not understand speech. Please try again.');
+      setVoiceError(t('Could not understand speech. Please try again.'));
     };
 
     return recognition;
@@ -163,7 +186,7 @@ const MiraAssistant: React.FC = () => {
           console.log('🎤 Speech recognition start() called');
         } catch (error) {
           console.error('🎤 Error starting recognition:', error);
-          setVoiceError('Failed to start speech recognition');
+          setVoiceError(t('Failed to start speech recognition'));
         }
       }
     }
@@ -227,7 +250,7 @@ const MiraAssistant: React.FC = () => {
       console.error("Error fetching AI response:", error);
       const errorMessage: Message = {
         id: Date.now(),
-        text: "Sorry, I couldn't process that request. Please try again.",
+        text: t("Sorry, I couldn't process that request. Please try again."),
         sender: 'ai',
         isError: true
       };
@@ -273,7 +296,7 @@ const MiraAssistant: React.FC = () => {
           {isLoading && (
             <div className="self-start bg-muted text-muted-foreground border border-border rounded-xl rounded-bl-md p-4 max-w-[85%]">
               <div className="typing-indicator italic text-muted-foreground">
-                Thinking...
+                {t("Thinking...")}
               </div>
             </div>
           )}
@@ -287,7 +310,7 @@ const MiraAssistant: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your message or use voice recording..."
+              placeholder={t("Type your message or use voice recording...")}
               disabled={isLoading || isRecording}
               rows={1}
               className="w-full p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
@@ -310,7 +333,7 @@ const MiraAssistant: React.FC = () => {
               className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-full cursor-pointer transition-all duration-200 ${
                 isRecording ? 'bg-destructive text-destructive-foreground shadow-md animate-pulse' : 'bg-transparent text-foreground hover:bg-muted'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
-              aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+              aria-label={isRecording ? t("Stop recording") : t("Start voice recording")}
             >
               <MicButtonIcon size={20} />
             </button>
@@ -330,7 +353,7 @@ const MiraAssistant: React.FC = () => {
 
           {/* Status messages */}
           {isRecording && (
-            <p className="text-destructive text-sm mt-2 text-center font-medium">🔴 Recording... Click mic to stop</p>
+            <p className="text-destructive text-sm mt-2 text-center font-medium">{t("Recording... Click mic to stop")}</p>
           )}
           {voiceError && (
             <p className="text-destructive text-sm mt-2 text-center">{voiceError}</p>

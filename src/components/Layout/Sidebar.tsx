@@ -11,18 +11,21 @@ import {
   Menu
 } from "lucide-react";
 import { useState } from "react";
-
-const navigation = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Mira Assistant", href: "/voice-assistant", icon: Mic },
-  { name: "Drugs", href: "/drugs", icon: Pill },
-  { name: "Dosage calculator", href: "/dosage-calculator", icon: Calculator },
-  { name: "Personal Care", href: "/personal-care", icon: Heart },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function Sidebar() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { t } = useLanguage();
+
+  const navigation = [
+    { name: t('nav.home'), href: "/", icon: Home },
+    { name: t('nav.chat'), href: "/voice-assistant", icon: Mic },
+    { name: t('nav.drugs'), href: "/drugs", icon: Pill },
+    { name: t('nav.dosage'), href: "/dosage-calculator", icon: Calculator },
+    { name: t('nav.personalCare'), href: "/personal-care", icon: Heart },
+  ];
+
   return (
     <div className={cn(
       "flex flex-col h-screen bg-sidebar-background border-r border-border transition-all duration-300",
@@ -82,8 +85,8 @@ export function Sidebar() {
               </div>
               {!isCollapsed && (
                 <div className="text-left">
-                  <p className="text-sm font-medium text-sidebar-foreground">User</p>
-                  <p className="text-xs text-muted-foreground">User info</p>
+                  <p className="text-sm font-medium text-sidebar-foreground">{t('user.title')}</p>
+                  <p className="text-xs text-muted-foreground">{t('user.info')}</p>
                 </div>
               )}
             </div>

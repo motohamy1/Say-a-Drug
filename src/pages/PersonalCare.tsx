@@ -1,16 +1,30 @@
 import { Layout } from "@/components/Layout/Layout";
 import CategoryCard from "@/components/PersonalCare/CategoryCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const personalCareCategories = [
-  { name: "Skin care" },
-  { name: "Female Care" },
-  { name: "Oral Care" },
-  { name: "Hair care" },
-  { name: "Men’s Care" },
-  { name: "Baby Care" },
+  { id: "skin-care", name: "Skin care" },
+  { id: "female-care", name: "Female Care" },
+  { id: "oral-care", name: "Oral Care" },
+  { id: "hair-care", name: "Hair care" },
+  { id: "mens-care", name: "Men’s Care" },
+  { id: "baby-care", name: "Baby Care" },
 ];
 
+const translations = {
+  "Personal Care": { en: "Personal Care", ar: "العناية الشخصية" },
+  "coming soon...": { en: "coming soon...", ar: "قريبا..." },
+  "Skin care": { en: "Skin care", ar: "العناية بالبشرة" },
+  "Female Care": { en: "Female Care", ar: "العناية النسائية" },
+  "Oral Care": { en: "Oral Care", ar: "العناية بالفم" },
+  "Hair care": { en: "Hair care", ar: "العناية بالشعر" },
+  "Men’s Care": { en: "Men’s Care", ar: "العناية بالرجال" },
+  "Baby Care": { en: "Baby Care", ar: "العناية بالطفل" },
+  "Personal<br/>Care": { en: "Personal<br/>Care", ar: "العناية<br/>الشخصية" },
+};
+
 export default function PersonalCare() {
+  const { language } = useLanguage();
   const categoryImages: { [key: string]: string } = {
     "Skin care": "/placeholder.svg",
     "Female Care": "/placeholder.svg",
@@ -20,18 +34,18 @@ export default function PersonalCare() {
     "Baby Care": "/placeholder.svg",
   };
 
+  const t = (key: keyof typeof translations) => {
+    return translations[key][language];
+  };
+
   return (
     <Layout>
-      <div className="flex-1 bg-background text-foreground"> {/* Clean white background */}
-        {/* <div className="text-sm text-gray-500 pt-4 pl-4 mb-2">
-          Home / Personal Care
-        </div> */}
-
+      <div className="flex-1 bg-background text-foreground">
         <h1 className="text-2xl font-semibold text-foreground pl-4 mb-6">
-          Personal Care
+          {t("Personal Care")}
         </h1>
         <h2 className="font-semibold text-foreground pl-4 mb-6">
-          coming soon...
+          {t("coming soon...")}
         </h2>
 
         <div className="relative w-full max-w-5xl mx-auto mt-6 mb-2 px-2">
@@ -44,7 +58,7 @@ export default function PersonalCare() {
               
               return (
                 <div
-                  key={category.name}
+                  key={category.id}
                   className="absolute transform -translate-x-1/2 -translate-y-1/2"
                   style={{
                     left: `calc(50% + ${x}px)`,
@@ -52,7 +66,7 @@ export default function PersonalCare() {
                   }}
                 >
                   <CategoryCard
-                    title={category.name}
+                    title={t(category.name as keyof typeof translations)}
                     imgSrc={categoryImages[category.name]}
                   />
                 </div>
@@ -62,7 +76,10 @@ export default function PersonalCare() {
             {/* Center element - optional logo or title */}
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
               <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-primary-foreground font-semibold text-sm text-center">Personal<br/>Care</span>
+                  <span
+                    className="text-primary-foreground font-semibold text-sm text-center"
+                    dangerouslySetInnerHTML={{ __html: t("Personal<br/>Care") }}
+                  />
               </div>
             </div>
           </div>
@@ -72,8 +89,8 @@ export default function PersonalCare() {
             <div className="grid grid-cols-1 gap-6">
               {personalCareCategories.map((category) => (
                 <CategoryCard
-                  key={`mobile-${category.name}`}
-                  title={category.name}
+                  key={`mobile-${category.id}`}
+                  title={t(category.name as keyof typeof translations)}
                   imgSrc={categoryImages[category.name]}
                 />
               ))}
