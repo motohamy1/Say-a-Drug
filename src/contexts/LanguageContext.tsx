@@ -157,13 +157,14 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  useEffect(() => {
-    console.log('Language changed to:', language);
-    localStorage.setItem('language', language);
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-    console.log('Document direction set to:', document.documentElement.dir);
-  }, [language]);
+  const changeLanguage = (newLang: Language) => {
+    console.log('Changing language from', language, 'to', newLang);
+    setLanguage(newLang);
+    localStorage.setItem('language', newLang);
+    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = newLang;
+    console.log('Language changed successfully to:', newLang);
+  };
 
   const t = (key: string): string => {
     const translation = translations[language]?.[key as keyof typeof translations[typeof language]] || translations.en[key as keyof typeof translations.en];
@@ -171,7 +172,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: changeLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

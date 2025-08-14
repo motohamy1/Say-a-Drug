@@ -8,7 +8,15 @@ import dosageRoutes from './routes/dosageRoutes.js';
 import drugRoutes from './routes/drugRoutes.js';
 
 // Load environment variables
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Resolve __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from the root .env file
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Log the API key to verify it's loaded
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Loaded' : 'Not Loaded');
