@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function Sidebar() {
   const location = useLocation();
@@ -83,6 +84,9 @@ export function Sidebar() {
                 );
               })}
             </nav>
+            <div className="p-4">
+              <ThemeToggle />
+            </div>
             <div className="p-4 border-t border-border">
               <Link to="/profile" onClick={() => setIsMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start text-left">
@@ -146,6 +150,10 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="mt-auto p-4">
+        <ThemeToggle />
+      </div>
 
       {/* Profile Section */}
       <div className="p-4 border-t border-border">

@@ -55,7 +55,7 @@ const Index = () => {
         {/* Key Features Section */}
         <section>
           <h2 className="text-2xl font-bold mb-8 text-center text-foreground">{t('home.keyFeatures')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 place-items-center">
             {features.map((feature) => (
               <FeatureCard
                 key={feature.title}

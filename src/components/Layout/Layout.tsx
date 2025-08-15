@@ -1,5 +1,4 @@
 import { Sidebar } from "./Sidebar";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,9 +15,11 @@ export function Layout({ children }: LayoutProps) {
     <div className="flex h-screen bg-background text-foreground" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <Sidebar />
       <div className="flex flex-col flex-1">
-        <header className={`flex items-center justify-end gap-4 p-4 ${isMobile ? 'pr-16' : ''}`}>
-          <LanguageToggle />
-          <ThemeToggle />
+        <header className={`flex items-center justify-between p-4`}>
+          <div></div> {/* This empty div will push the other elements to the right */}
+          <div className="flex items-center gap-4">
+            <LanguageToggle />
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-4">
           {children}

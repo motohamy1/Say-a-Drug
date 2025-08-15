@@ -2,6 +2,7 @@
 import { Layout } from '@/components/Layout/Layout';
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 // No longer importing ChatAssistant.css as styles will be migrated to Tailwind
 
 // Define TypeScript interface for messages
@@ -16,6 +17,7 @@ const ChatAssistant: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // --- Voice State ---
@@ -349,10 +351,10 @@ const ChatAssistant: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type your message or use voice recording..."
+              placeholder={isMobile ? "Type message or use voice" : "Type your message or use voice recording..."}
               disabled={isLoading || isRecording}
               rows={1}
-              className="w-full p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
+              className="w-full p-3 sm:p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-sm sm:text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
             />
             
             {/* Audio level indicator */}
