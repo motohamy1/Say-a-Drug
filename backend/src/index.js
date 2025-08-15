@@ -33,7 +33,7 @@ app.use(cors({
     // Get allowed origins from environment variable or use default
     const allowedOrigins = process.env.ALLOWED_ORIGINS ?
       process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) :
-      ['http://localhost:8080'];
+      ['http://localhost:8080', 'https://say-a-drug.onrender.com'];
     
     // Check if the origin is in our allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
