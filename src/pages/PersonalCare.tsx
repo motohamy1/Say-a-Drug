@@ -1,6 +1,7 @@
 import { Layout } from "@/components/Layout/Layout";
 import CategoryCard from "@/components/PersonalCare/CategoryCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const personalCareCategories = [
   { id: "skin-care", name: "Skin care" },
@@ -25,6 +26,7 @@ const translations = {
 
 export default function PersonalCare() {
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
   const categoryImages: { [key: string]: string } = {
     "Skin care": "/placeholder.svg",
     "Female Care": "/placeholder.svg",
@@ -49,10 +51,10 @@ export default function PersonalCare() {
         </h2>
 
         <div className="relative w-full max-w-5xl mx-auto mt-6 mb-2 px-2">
-          <div className="relative w-[500px] h-[500px] mx-auto">
+          <div className="hidden sm:block relative w-full max-w-[500px] aspect-square mx-auto">
             {personalCareCategories.map((category, index) => {
               const angle = (index * 360) / personalCareCategories.length;
-              const radius = 180; // Distance from center - increased for better spacing
+              const radius = isMobile ? 120 : 180; // Responsive radius
               const x = Math.cos((angle - 90) * (Math.PI / 180)) * radius;
               const y = Math.sin((angle - 90) * (Math.PI / 180)) * radius;
               
@@ -85,7 +87,7 @@ export default function PersonalCare() {
           </div>
           
           {/* Mobile fallback - stack vertically on small screens */}
-          <div className="block sm:hidden mt-8">
+          <div className="sm:hidden mt-8">
             <div className="grid grid-cols-1 gap-6">
               {personalCareCategories.map((category) => (
                 <CategoryCard

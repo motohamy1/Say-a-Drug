@@ -14,6 +14,7 @@ interface Message {
 const translations = {
   "Type your message or use voice recording...": { en: "Type your message or use voice recording...", ar: "اكتب رسالتك أو استخدم التسجيل الصوتي..." },
   "Type message or use voice": { en: "Type message or use voice", ar: "اكتب رسالة أو استخدم الصوت" },
+  "Chat with Mira...": { en: "Chat with Mira...", ar: "تحدث مع ميرا..." },
   "Thinking...": { en: "Thinking...", ar: "أفكر..." },
   "Sorry, I couldn't process that request. Please try again.": { en: "Sorry, I couldn't process that request. Please try again.", ar: "عذراً، لم أتمكن من معالجة هذا الطلب. الرجاء المحاولة مرة أخرى." },
   "Stop recording": { en: "Stop recording", ar: "إيقاف التسجيل" },
@@ -313,7 +314,7 @@ const MiraAssistant: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isMobile ? t("Type message or use voice") : t("Type your message or use voice recording...")}
+              placeholder={isMobile ? t("Chat with Mira...") : t("Type your message or use voice recording...")}
               disabled={isLoading || isRecording}
               rows={1}
               className="w-full p-3 sm:p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-sm sm:text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"

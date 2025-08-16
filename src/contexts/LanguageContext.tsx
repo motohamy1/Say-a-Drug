@@ -85,8 +85,8 @@ const translations = {
     'nav.personalCare': 'العناية الشخصية',
 
     // Home Page
-    'home.welcome': 'مرحباً بك في صيدلية قل',
-    'home.description': 'صيدليتك الموثوقة عبر الإنترنت، التي توفر سهولة الوصول إلى الأدوية والمنتجات الصحية. منصتنا المدعومة بالذكاء الاصطناعي تبسط رحلتك الصحية بميزات مثل البحث الصوتي عن الأدوية، وحساب الجرعات، والرعاية الصحية الشخصية مع صيدلية قل.',
+    'home.welcome': 'مرحباً بك في عالم الدواء ',
+    'home.description': 'مكانك الموثوق عبر الإنترنت، الذي يوفر سهولة الوصول إلى الأدوية والمنتجات الصحية. منصتنا المدعومة بالذكاء الاصطناعي تبسط رحلتك الصحية بميزات مثل البحث الصوتي عن الأدوية، وحساب الجرعات، والرعاية الصحية الشخصية مع عالم الدواء.',
     'home.keyFeatures': 'الميزات الرئيسية',
 
     // Features
@@ -95,13 +95,13 @@ const translations = {
     'features.drugSearch.title': 'البحث عن دواء',
     'features.drugSearch.description': 'ابحث في قاعدة بيانات الأدوية المصرية بسهولة',
     'features.dosageCalculator.title': 'حاسبة الجرعات',
-    'features.dosageCalculator.description': 'حسابات الجرعات بالذكاء الاصطناعي',
+    'features.dosageCalculator.description': 'حسابات الجرعات بدقة وسهولة',
     'features.personalCare.title': 'العناية الشخصية',
     'features.personalCare.description': 'منتجات العناية الشخصية والأدوية المتاحة بدون وصفة طبية',
     
     // Dosage Calculator
     'dosage.title': 'حاسبة الجرعات',
-    'dosage.subtitle': 'حسابات جرعات الأدوية بالذكاء الاصطناعي مع مساعدة ميرا',
+    'dosage.subtitle': 'حسابات جرعات الأدوية بدقة وسهولة',
     'dosage.patientInfo': 'معلومات المريض',
     'dosage.drugName': 'اسم الدواء',
     'dosage.drugNamePlaceholder': 'أدخل اسم الدواء',

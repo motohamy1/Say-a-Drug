@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function Sidebar() {
   const location = useLocation();
@@ -84,8 +85,9 @@ export function Sidebar() {
                 );
               })}
             </nav>
-            <div className="p-4">
+            <div className="p-4 flex items-center gap-4">
               <ThemeToggle />
+              <LanguageToggle />
             </div>
             <div className="p-4 border-t border-border">
               <Link to="/profile" onClick={() => setIsMobileOpen(false)}>
@@ -151,8 +153,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto p-4">
+      <div className="mt-auto p-4 flex items-center gap-4">
         <ThemeToggle />
+        <LanguageToggle />
       </div>
 
       {/* Profile Section */}

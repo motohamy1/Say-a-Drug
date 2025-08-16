@@ -351,7 +351,7 @@ const ChatAssistant: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isMobile ? "Type message or use voice" : "Type your message or use voice recording..."}
+              placeholder={isMobile ? "Chat with assistant..." : "Type your message or use voice recording..."}
               disabled={isLoading || isRecording}
               rows={1}
               className="w-full p-3 sm:p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-sm sm:text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
