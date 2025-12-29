@@ -1,4 +1,9 @@
 // Validation middleware for common input validation
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 export const validateSearchQuery = (req, res, next) => {
   const { q } = req.query;
   
@@ -33,11 +38,16 @@ export const validateSearchQuery = (req, res, next) => {
   next();
 };
 
+/**
+ * @param {import('express').Request & { pagination?: { page: number, limit: number } }} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 export const validatePagination = (req, res, next) => {
   const { page = 1, limit = 20 } = req.query;
   
-  const pageNum = parseInt(page);
-  const limitNum = parseInt(limit);
+  const pageNum = parseInt(String(page));
+  const limitNum = parseInt(String(limit));
   
   if (isNaN(pageNum) || pageNum < 1) {
     return res.status(400).json({
@@ -62,6 +72,11 @@ export const validatePagination = (req, res, next) => {
   next();
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 export const validateDosageRequest = (req, res, next) => {
   const { drugName, age, weight, category } = req.body;
   
@@ -119,6 +134,11 @@ export const validateDosageRequest = (req, res, next) => {
   next();
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 export const validateChatMessage = (req, res, next) => {
   const { message } = req.body;
   

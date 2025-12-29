@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { io, Socket } from 'socket.io-client';
 
 interface Message {
   id: number;
@@ -27,8 +28,8 @@ const translations = {
   'Speech recognition failed': { en: 'Speech recognition failed', ar: 'فشل التعرف على الكلام' },
   'Could not understand speech. Please try again.': { en: 'Could not understand speech. Please try again.', ar: 'لم أستطع فهم الكلام. يرجى المحاولة مرة أخرى.' },
   'Failed to start speech recognition': { en: 'Failed to start speech recognition', ar: 'فشل بدء التعرف على الكلام' },
+  'System Error': { en: 'System Error', ar: 'خطأ في النظام' }
 };
-
 
 const MiraAssistant: React.FC = () => {
   const { language } = useLanguage();
@@ -42,7 +43,12 @@ const MiraAssistant: React.FC = () => {
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
 
-  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  // Socket and Audio Refs
+  const socketRef = useRef<Socket | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioQueueRef = useRef<string[]>([]);
+  const isPlayingAudioRef = useRef(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = (key: keyof typeof translations) => {
     return translations[key][language];
@@ -56,159 +62,168 @@ const MiraAssistant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Initialize Socket.io
+  useEffect(() => {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    socketRef.current = io(backendUrl, {
+      transports: ['websocket', 'polling'], // Prioritize websocket
+    });
 
+    const socket = socketRef.current;
 
-  // Use browser's built-in speech recognition instead of backend transcription
-  const initializeSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      console.error('Speech recognition not supported');
-      setVoiceError(t('Speech recognition not supported in this browser'));
-      return null;
-    }
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+    });
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Keep listening for longer
-    recognition.interimResults = true; // Show interim results
-    recognition.lang = language === 'ar' ? 'ar-EG' : 'en-US';
-    recognition.maxAlternatives = 3; // Get more alternatives for better drug name recognition
+    socket.on('voice:transcription', (data: { text: string, isFinal: boolean }) => {
+      // Update the user's current message bubble or input with the transcription
+      // If result is final, we might want to "lock it in"
+      // data.text is the transcript
+      
+      // For now, let's update the input value so the user sees what's being heard
+      // or append a temporary user message.
+      // Updating input value is simpler for now, or a "live caption" area.
+      // But the user wants "ai voice chatting", so usually it appears as a message.
+      
+      // Strategy: Update a temporary "voice" message in the list, or just input.
+      // Let's use input for interim, and send as message on final (handled by backend usually? no, backend sends final transcript too).
+      // Actually backend handles the query on final transcript. So we just show the user what was said.
+      
+      if (data.isFinal) {
+        // Add user message
+        const userMsg: Message = {
+            id: Date.now(),
+            text: data.text,
+            sender: 'user'
+        };
+        setMessages(prev => [...prev, userMsg]);
+        setInputValue(''); // clear any interim text
+        setIsLoading(true); // AI is processing
+      } else {
+        // Show interim in input
+        setInputValue(data.text);
+      }
+    });
+
+    socket.on('voice:processing', () => {
+      setIsLoading(true);
+    });
+
+    socket.on('voice:text-response', (data: { text: string }) => {
+      setIsLoading(false);
+      const aiMsg: Message = {
+        id: Date.now() + 1,
+        text: data.text,
+        sender: 'ai'
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    });
+
+    socket.on('voice:audio-chunk', (base64Chunk: string) => {
+      queueAudioChunk(base64Chunk);
+    });
+
+    socket.on('voice:response-complete', () => {
+      // Maybe visually indicate finished talking?
+    });
+
+    socket.on('voice:error', (error: { message: string }) => {
+      console.error('Socket voice error:', error);
+      setVoiceError(error.message);
+      setIsRecording(false);
+      setIsLoading(false);
+      stopRecording();
+    });
+
+    return () => {
+      stopRecording();
+      socket.disconnect();
+    };
+  }, []);
+
+  const queueAudioChunk = (base64Chunk: string) => {
+    audioQueueRef.current.push(base64Chunk);
+    playNextChunk();
+  };
+
+  const playNextChunk = () => {
+    if (isPlayingAudioRef.current || audioQueueRef.current.length === 0) return;
+
+    isPlayingAudioRef.current = true;
+    const chunk = audioQueueRef.current.shift();
+    if (!chunk) return;
+
+    const audio = new Audio(`data:audio/mp3;base64,${chunk}`);
+    currentAudioRef.current = audio;
     
-    // Add timeout to stop after reasonable time
-    let timeoutId: NodeJS.Timeout;
+    audio.onended = () => {
+      isPlayingAudioRef.current = false;
+      playNextChunk();
+    };
     
-    const stopWithTimeout = () => {
-      timeoutId = setTimeout(() => {
-        console.log('🎤 Auto-stopping after 10 seconds');
-        recognition.stop();
-      }, 10000); // 10 seconds timeout
+    audio.onerror = (e) => {
+      console.error("Audio playback error", e);
+      isPlayingAudioRef.current = false;
+      playNextChunk();
     };
 
-    recognition.onstart = () => {
-      console.log('🎤 Speech recognition started');
-      setIsRecording(true);
+    audio.play().catch(e => {
+        console.error("Play failed", e);
+        isPlayingAudioRef.current = false;
+        playNextChunk();
+    });
+  };
+
+  const startRecording = async () => {
+    try {
       setVoiceError(null);
-      stopWithTimeout(); // Start timeout
-    };
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm', // Deepgram supports webm
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
 
-    recognition.onresult = (event) => {
-      console.log('🎤 Speech recognition result event:', event);
-      
-      let finalTranscript = '';
-      
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        
-        // Check all alternatives for better drug name recognition
-        let bestTranscript = result[0].transcript;
-        for (let j = 0; j < result.length; j++) {
-          const alternative = result[j].transcript.toLowerCase();
-          // Prefer alternatives that contain drug names
-          if (alternative.includes('panadol') || alternative.includes('abimol') || 
-              alternative.includes('aspirin') || alternative.includes('ibuprofen')) {
-            bestTranscript = result[j].transcript;
-            console.log('🎤 Found drug name in alternative:', bestTranscript);
-            break;
-          }
+      socketRef.current?.emit('voice:start');
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          socketRef.current?.emit('voice:stream', event.data);
+          
+          // Visualize audio level (fake implementation for now or simple volume meter)
+          // For real volume meter we need AudioContext.
+          // Randomize for visual feedback slightly to show "alive"
+          setAudioLevel(Math.random() * 100);
         }
-        
-        console.log('🎤 Transcript:', bestTranscript, 'Final:', result.isFinal);
-        
-        if (result.isFinal) {
-          finalTranscript += bestTranscript;
-        }
-      }
-      
-      if (finalTranscript.trim()) {
-        console.log('🎤 Final transcript, sending to AI:', finalTranscript);
-        clearTimeout(timeoutId); // Clear timeout
-        recognition.stop(); // Stop after getting final result
-        handleSendMessage(finalTranscript);
-      }
-    };
+      };
 
-    recognition.onend = () => {
-      console.log('🎤 Speech recognition ended');
-      clearTimeout(timeoutId); // Clear timeout
-      setIsRecording(false);
-      setAudioLevel(0);
-    };
+      mediaRecorder.start(250); // Send chunks every 250ms
+      setIsRecording(true);
 
-    recognition.onerror = (event) => {
-      console.error('🎤 Speech recognition error:', event.error);
-      clearTimeout(timeoutId); // Clear timeout
-      setIsRecording(false);
-      setAudioLevel(0);
-      
-      let errorMessageKey: keyof typeof translations = 'Speech recognition failed';
-      if (event.error === 'no-speech') {
-        errorMessageKey = 'No speech detected. Please speak clearly and try again.';
-      } else if (event.error === 'not-allowed') {
-        errorMessageKey = 'Microphone access denied. Please allow microphone permissions.';
-      } else if (event.error === 'network') {
-        errorMessageKey = 'Network error. Please check your connection.';
-      }
-      
-      setVoiceError(t(errorMessageKey));
-    };
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      setVoiceError(t('Microphone access denied. Please allow microphone permissions.'));
+    }
+  };
 
-    recognition.onspeechstart = () => {
-      console.log('🎤 Speech detected');
-    };
-
-    recognition.onspeechend = () => {
-      console.log('🎤 Speech ended');
-    };
-
-    recognition.onnomatch = () => {
-      console.log('🎤 No speech match found');
-      setVoiceError(t('Could not understand speech. Please try again.'));
-    };
-
-    return recognition;
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+    socketRef.current?.emit('voice:stop');
+    setIsRecording(false);
+    setAudioLevel(0);
   };
 
   const toggleRecording = () => {
-    console.log('🎤 Toggle recording clicked, isRecording:', isRecording, 'isLoading:', isLoading);
-    
-    if (isLoading) return;
-
     if (isRecording) {
-      console.log('🎤 Stopping speech recognition');
-      // Stop speech recognition
-      if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop();
-      }
+      stopRecording();
     } else {
-      console.log('🎤 Starting speech recognition');
-      // Start speech recognition
-      const recognition = initializeSpeechRecognition();
-      if (recognition) {
-        speechRecognitionRef.current = recognition;
-        try {
-          recognition.start();
-          console.log('🎤 Speech recognition start() called');
-        } catch (error) {
-          console.error('🎤 Error starting recognition:', error);
-          setVoiceError(t('Failed to start speech recognition'));
-        }
-      }
+      startRecording();
     }
   };
-
-  // Test speech recognition availability
-  const testSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    console.log('🎤 Speech Recognition available:', !!SpeechRecognition);
-    console.log('🎤 User agent:', navigator.userAgent);
-    console.log('🎤 Is HTTPS:', location.protocol === 'https:');
-    console.log('🎤 Is localhost:', location.hostname === 'localhost');
-  };
-
-  // Test on component mount
-  useEffect(() => {
-    testSpeechRecognition();
-  }, []);
 
   const handleSendMessage = async (messageText?: string) => {
     const message = messageText || inputValue.trim();
@@ -239,8 +254,7 @@ const MiraAssistant: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Backend response:', data);
-
+      
       const replyText = data.data?.reply || data.reply || 'No response received';
       
       const newAiMessage: Message = {
@@ -271,16 +285,7 @@ const MiraAssistant: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (speechRecognitionRef.current) {
-        speechRecognitionRef.current.stop();
-      }
-    };
-  }, []);
-
   const MicButtonIcon = isRecording ? Square : Mic;
-  const micButtonClass = `mic-button ${isRecording ? 'recording' : ''}`;
 
   return (
     <Layout>
@@ -315,7 +320,7 @@ const MiraAssistant: React.FC = () => {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isMobile ? t("Chat with Mira...") : t("Type your message or use voice recording...")}
-              disabled={isLoading || isRecording}
+              disabled={isLoading && !isRecording} /* Allow typing if recording? Maybe not. */
               rows={1}
               className="w-full p-3 sm:p-4 pr-20 border border-input rounded-3xl resize-none font-sans text-sm sm:text-base leading-normal max-h-[150px] overflow-y-auto box-border transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring bg-card text-foreground"
             />
@@ -333,7 +338,7 @@ const MiraAssistant: React.FC = () => {
             {/* Mic Button */}
             <button
               onClick={toggleRecording}
-              disabled={isLoading}
+              disabled={isLoading && !isRecording}
               className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-full cursor-pointer transition-all duration-200 ${
                 isRecording ? 'bg-destructive text-destructive-foreground shadow-md animate-pulse' : 'bg-transparent text-foreground hover:bg-muted'
               } disabled:opacity-50 disabled:cursor-not-allowed`}

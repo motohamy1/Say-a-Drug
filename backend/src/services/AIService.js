@@ -83,6 +83,7 @@ class AIService {
 
   /**
    * Classify message type to determine appropriate response
+   * @param {string} message
    */
   classifyMessage(message) {
     const lowerMessage = message.toLowerCase().trim();
@@ -133,6 +134,7 @@ class AIService {
 
   /**
    * Search Egyptian drugs database with smart fuzzy matching
+   * @param {string} message
    */
   async searchEgyptianDatabase(message) {
     try {
@@ -192,9 +194,21 @@ class AIService {
   }
 
   /**
+   * @typedef {Object} Drug
+   * @property {string} [Drugname]
+   * @property {string} [Company]
+   * @property {string} [Form]
+   * @property {number|string} [Price]
+   * @property {string} [Category]
+   */
+
+  /**
    * Find similar drug names using fuzzy matching
+   * @param {Drug[]} drugs
+   * @param {string} searchTerm
    */
   findSimilarDrugs(drugs, searchTerm) {
+    /** @type {(Drug & { similarity: number })[]} */
     const suggestions = [];
     
     drugs.forEach(drug => {
@@ -213,6 +227,8 @@ class AIService {
 
   /**
    * Calculate similarity between two strings (simple algorithm)
+   * @param {string} str1
+   * @param {string} str2
    */
   calculateSimilarity(str1, str2) {
     const longer = str1.length > str2.length ? str1 : str2;
@@ -244,6 +260,7 @@ class AIService {
       console.log('Searching for:', message);
       
       // Try both smart search and regular search
+      /** @type {any[]} */
       let results = await drugDatabaseService.smartSearch(message);
       console.log('Smart search results:', results?.length || 0);
       
@@ -282,7 +299,7 @@ class AIService {
       
       // Get drug information from database
       const drugs = await drugDatabaseService.loadDrugs();
-      const drug = drugs.find((/** @type {{ Drugname: string; GenericName: string; }} */ d) => 
+      const drug = drugs.find((/** @type {{ Drugname?: string; GenericName?: string; }} */ d) => 
         d.Drugname?.toLowerCase().includes(drugName.toLowerCase()) ||
         d.GenericName?.toLowerCase().includes(drugName.toLowerCase())
       );
@@ -338,7 +355,9 @@ class AIService {
 
   /**
    * Process natural language voice commands for dosage
-   * @param {any} command
+   * @param {string} command
+   * @param {number} [retryCount=0]
+   * @returns {Promise<string>}
    */
   async processVoiceDosageCommand(command, retryCount = 0) {
     try {
@@ -374,14 +393,14 @@ class AIService {
       console.error('Error processing voice dosage command:', error);
       
       // Retry for API overload (503 errors)
-      if (error.status === 503 && retryCount < 2) {
+      if (/** @type {any} */(error).status === 503 && retryCount < 2) {
         console.log(`API overloaded, retrying in ${(retryCount + 1) * 2} seconds...`);
         await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 2000));
         return this.processVoiceDosageCommand(command, retryCount + 1);
       }
       
       // Fallback for persistent API issues
-      if (error.status === 503) {
+      if (/** @type {any} */(error).status === 503) {
         console.log('API still overloaded, using fallback parsing');
         return this.fallbackVoiceProcessing(command);
       }
@@ -390,6 +409,11 @@ class AIService {
     }
   }
 
+  /**
+   * Fallback processing when AI service is unavailable
+   * @param {string} command
+   * @returns {string} JSON string of the result
+   */
   fallbackVoiceProcessing(command) {
     const text = command.toLowerCase();
     const result = {

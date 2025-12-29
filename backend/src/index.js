@@ -1,11 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { generalLimiter, chatLimiter, dosageLimiter, transcriptionLimiter } from './middleware/rateLimiter.js';
 import databaseRoutes from './routes/databaseRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import dosageRoutes from './routes/dosageRoutes.js';
 import drugRoutes from './routes/drugRoutes.js';
+import setupVoiceSocket from './sockets/voiceSocket.js';
 
 // Load environment variables
 import path from 'path';
@@ -22,6 +25,18 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Loaded' : 'Not Loaded');
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: true, // Allow all origins for development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  }
+});
+
+// Setup Voice Socket
+setupVoiceSocket(io);
+
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -121,9 +136,10 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('Socket.io server initialized');
 });
 
 // Graceful shutdown

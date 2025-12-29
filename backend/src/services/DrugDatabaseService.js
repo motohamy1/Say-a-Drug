@@ -6,6 +6,18 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * @typedef {Object} Drug
+ * @property {string} [Drugname]
+ * @property {string} [Company]
+ * @property {string} [Category]
+ * @property {string} [GenericName]
+ * @property {string} [RegNumber]
+ * @property {string} [ActiveIngredient]
+ * @property {string} [Form]
+ * @property {number} [Price]
+ */
+
 class DrugDatabaseService {
   constructor() {
     this.dbPath = path.join(__dirname, '..', '..', 'egyptian_drugs.json');
@@ -16,6 +28,7 @@ class DrugDatabaseService {
 
   /**
    * Load drugs from JSON file with caching
+   * @returns {Promise<Drug[]>}
    */
   async loadDrugs() {
     const now = Date.now();
@@ -64,6 +77,9 @@ class DrugDatabaseService {
 
   /**
    * Search drugs by various criteria with smart matching
+   * @param {string} query
+   * @param {number} [page=1]
+   * @param {number} [limit=20]
    */
   // @ts-ignore
   async searchDrugs(query, page = 1, limit = 20) {
@@ -211,6 +227,7 @@ class DrugDatabaseService {
 
   /**
    * Smart search specifically for AI assistant
+   * @param {string} query
    */
   async smartSearch(query) {
     try {

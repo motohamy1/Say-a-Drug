@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
       console.error('AI Service error details:', aiError);
       // @ts-ignore
       console.error('Error stack:', aiError.stack);
-      reply = `Hello! I received your message: "${message}". I'm currently having technical difficulties with the AI service. Error: ${aiError.message}. Please try again later.`;
+      reply = `Hello! I received your message: "${message}". I'm currently having technical difficulties with the AI service. Error: ${aiError instanceof Error ? aiError.message : String(aiError)}. Please try again later.`;
     }
     
     res.json({
